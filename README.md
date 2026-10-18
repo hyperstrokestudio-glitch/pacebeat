@@ -16,4 +16,10 @@ npm run typecheck
 npm test
 ```
 
+## Build (EAS)
+
+```bash
+npx eas-cli build --profile preview --platform android
+```
+
 Package id: `com.pacebeat.app`
