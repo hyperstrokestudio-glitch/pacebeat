@@ -1,10 +1,11 @@
 import {
-  Outfit_600SemiBold,
-  Outfit_700Bold,
-  Outfit_800ExtraBold,
-  useFonts,
-} from '@expo-google-fonts/outfit';
+  Cinzel_400Regular,
+  Cinzel_600SemiBold,
+  Cinzel_700Bold,
+} from '@expo-google-fonts/cinzel';
+import { SpaceMono_700Bold } from '@expo-google-fonts/space-mono';
 import { Stack } from 'expo-router';
+import { useFonts } from 'expo-font';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -12,9 +13,10 @@ import { colors } from '../src/theme';
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
-    Outfit_600SemiBold,
-    Outfit_700Bold,
-    Outfit_800ExtraBold,
+    Cinzel_400Regular,
+    Cinzel_600SemiBold,
+    Cinzel_700Bold,
+    SpaceMono_700Bold,
   });
 
   if (!fontsLoaded) {
