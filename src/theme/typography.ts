@@ -1,26 +1,32 @@
 export const typography = {
-  title: {
-    fontFamily: 'Outfit_700Bold',
-    fontSize: 18,
-    letterSpacing: 6,
-  },
-  bpm: {
-    fontFamily: 'Outfit_800ExtraBold',
-    fontSize: 96,
+  serifLabel: {
+    fontFamily: 'Cinzel_600SemiBold',
+    fontSize: 11,
     letterSpacing: 2,
   },
-  label: {
-    fontFamily: 'Outfit_600SemiBold',
-    fontSize: 11,
+  serifTitle: {
+    fontFamily: 'Cinzel_700Bold',
+    fontSize: 13,
     letterSpacing: 2.5,
   },
-  control: {
-    fontFamily: 'Outfit_600SemiBold',
-    fontSize: 17,
+  timer: {
+    fontFamily: 'SpaceMono_700Bold',
+    fontSize: 72,
+    letterSpacing: 4,
+  },
+  panelValue: {
+    fontFamily: 'SpaceMono_700Bold',
+    fontSize: 22,
     letterSpacing: 1,
   },
-  value: {
-    fontFamily: 'Outfit_600SemiBold',
-    fontSize: 15,
+  gemLabel: {
+    fontFamily: 'Cinzel_700Bold',
+    fontSize: 16,
+    letterSpacing: 3,
+  },
+  unitLabel: {
+    fontFamily: 'Cinzel_400Regular',
+    fontSize: 9,
+    letterSpacing: 1.5,
   },
 } as const;
