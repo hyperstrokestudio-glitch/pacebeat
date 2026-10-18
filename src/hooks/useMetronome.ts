@@ -68,7 +68,7 @@ export function useMetronome() {
   useEffect(() => {
     if (!ready) return;
     void ensurePlayer(bpm);
-  }, [bpm, ensurePlayer, ready]);
+  }, [bpm, ensureProvider, ready]);
 
   useEffect(() => {
     const player = playerRef.current;
