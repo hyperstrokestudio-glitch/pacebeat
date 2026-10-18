@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "PaceBeat",
+    "slug": "pacebeat",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "pacebeat",
+    "userInterfaceStyle": "dark",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#070B12"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.pacebeat.app"
+    },
+    "android": {
+      "package": "com.pacebeat.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#070B12",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-audio",
+        {
+          "enableBackgroundPlayback": true,
+          "enableBackgroundRecording": false,
+          "recordAudioAndroid": false,
+          "microphonePermission": false
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
