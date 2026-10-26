@@ -4,6 +4,13 @@ import { getBeatFileUri } from '../audio/beatCache';
 import { clampBpm, DEFAULT_BPM } from '../metronome/bpm';
 import { loadBpm, saveBpm } from '../storage/preferences';
 
+/** Mix with Spotify/podcasts; do not grab exclusive audio focus (lock screen needs doNotMix). */
+const METRONOME_AUDIO_MODE = {
+  playsInSilentMode: true,
+  shouldPlayInBackground: true,
+  interruptionMode: 'mixWithOthers' as const,
+};
+
 export function useMetronome() {
   const [ready, setReady] = useState(false);
   const [bpm, setBpmState] = useState(DEFAULT_BPM);
@@ -15,6 +22,7 @@ export function useMetronome() {
   useEffect(() => {
     let mounted = true;
     void (async () => {
+      await setAudioModeAsync(METRONOME_AUDIO_MODE);
       const stored = await loadBpm();
       if (mounted) {
         setBpmState(stored);
@@ -25,7 +33,6 @@ export function useMetronome() {
     return () => {
       mounted = false;
       playerRef.current?.pause();
-      playerRef.current?.clearLockScreenControls();
       playerRef.current?.remove();
       playerRef.current = null;
     };
@@ -58,10 +65,6 @@ export function useMetronome() {
         await loadBeatIntoPlayer(playerRef.current, clamped);
         if (playerRef.current.playing) {
           playerRef.current.play();
-          playerRef.current.updateLockScreenMetadata({
-            title: 'PaceBeat',
-            artist: `${clamped} BPM`,
-          });
         }
       }
     },
@@ -76,16 +79,8 @@ export function useMetronome() {
   );
 
   const start = useCallback(async () => {
-    await setAudioModeAsync({
-      playsInSilentMode: true,
-      shouldPlayInBackground: true,
-      interruptionMode: 'doNotMix',
-    });
+    await setAudioModeAsync(METRONOME_AUDIO_MODE);
     const player = await ensurePlayer();
-    player.setActiveForLockScreen(true, {
-      title: 'PaceBeat',
-      artist: `${bpmRef.current} BPM`,
-    });
     player.play();
     setIsPlaying(true);
   }, [ensurePlayer]);
@@ -95,7 +90,6 @@ export function useMetronome() {
     if (player) {
       player.pause();
       void player.seekTo(0);
-      player.clearLockScreenControls();
     }
     setIsPlaying(false);
   }, []);
