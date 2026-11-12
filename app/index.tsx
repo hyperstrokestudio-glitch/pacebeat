@@ -2,14 +2,13 @@ import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMetronome } from '../src/hooks/useMetronome';
 import { spacing } from '../src/theme';
-import { BpmPanel } from '../src/ui/BpmPanel';
 import { CenterBpmDisplay } from '../src/ui/CenterBpmDisplay';
 import { GemButton } from '../src/ui/GemButton';
 import { StatusOrbRow } from '../src/ui/StatusOrbRow';
 import { StoneBackground } from '../src/ui/StoneBackground';
 
 export default function HomeScreen() {
-  const { ready, bpm, isPlaying, start, stop, adjustBpm } = useMetronome();
+  const { ready, bpm, isPlaying, beatPulse, start, stop, adjustBpm, setBpm } = useMetronome();
 
   if (!ready) {
     return <View style={styles.loading} />;
@@ -19,11 +18,16 @@ export default function HomeScreen() {
     <View style={styles.root}>
       <StoneBackground />
       <SafeAreaView style={styles.safe}>
-        <StatusOrbRow isPlaying={isPlaying} />
+        <StatusOrbRow isPlaying={isPlaying} pulse={beatPulse} />
 
-        <CenterBpmDisplay bpm={bpm} />
-
-        <BpmPanel bpm={bpm} onAdjust={adjustBpm} />
+        <CenterBpmDisplay
+          bpm={bpm}
+          isPlaying={isPlaying}
+          onAdjust={adjustBpm}
+          onSetBpm={(next) => {
+            void setBpm(next);
+          }}
+        />
 
         <View style={styles.actionsRow}>
           <GemButton variant="start" disabled={isPlaying} onPress={() => void start()} />

@@ -1,5 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, Text, View } from 'react-native';
+import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 import { colors, typography } from '../theme';
 
 type OrbVariant = 'run' | 'pause' | 'stop';
@@ -8,6 +9,7 @@ type Props = {
   variant: OrbVariant;
   active: boolean;
   label: string;
+  pulse: SharedValue<number>;
 };
 
 const orbPalette: Record<
@@ -31,18 +33,40 @@ const orbPalette: Record<
   },
 };
 
-export function StatusOrb({ variant, active, label }: Props) {
+export function StatusOrb({ variant, active, label, pulse }: Props) {
   const palette = orbPalette[variant];
-  const gradient = active ? palette.active : palette.muted;
+  const flashStyle = useAnimatedStyle(() => {
+    const beat = active ? pulse.value : 0;
+    return {
+      opacity: active ? 0.2 + beat * 0.8 : 0,
+    };
+  }, [active]);
+  const glowStyle = useAnimatedStyle(() => {
+    const beat = active ? pulse.value : 0;
+    return {
+      shadowOpacity: active ? 0.25 + beat * 0.65 : 0,
+      transform: [{ scale: 1 + beat * 0.06 }],
+    };
+  }, [active]);
 
   return (
     <View style={styles.wrap}>
-      <View style={[styles.frame, active && styles.frameActive]}>
-        <LinearGradient colors={gradient} style={styles.orb}>
+      <Animated.View
+        style={[styles.frame, active && styles.frameActive, { shadowColor: palette.text }, glowStyle]}
+      >
+        <View style={styles.orb}>
+          <LinearGradient colors={palette.muted} style={styles.fill} />
+          <Animated.View
+            pointerEvents="none"
+            testID={variant === 'run' ? 'run-flash' : undefined}
+            style={[styles.fill, flashStyle]}
+          >
+            <LinearGradient colors={palette.active} style={styles.fill} />
+          </Animated.View>
           <View style={styles.highlight} />
           <View style={styles.core} />
-        </LinearGradient>
-      </View>
+        </View>
+      </Animated.View>
       <Text
         style={[
           styles.label,
@@ -66,13 +90,11 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.metalDark,
     backgroundColor: colors.metalMid,
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: 12,
   },
   frameActive: {
     borderColor: colors.metalEdge,
-    shadowColor: colors.accent,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
     elevation: 8,
   },
   orb: {
@@ -81,8 +103,11 @@ const styles = StyleSheet.create({
     borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
+    overflow: 'hidden',
+  },
+  fill: {
+    ...StyleSheet.absoluteFill,
+    borderRadius: 26,
   },
   highlight: {
     position: 'absolute',

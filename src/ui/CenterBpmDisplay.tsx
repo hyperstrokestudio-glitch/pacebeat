@@ -1,12 +1,33 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { usePressRepeat } from '../hooks/usePressRepeat';
 import { colors, typography } from '../theme';
+import { BpmKeypad } from './BpmKeypad';
 
 type Props = {
   bpm: number;
+  isPlaying: boolean;
+  onAdjust: (delta: number) => void;
+  onSetBpm: (bpm: number) => void;
 };
 
-export function CenterBpmDisplay({ bpm }: Props) {
+export function CenterBpmDisplay({ bpm, isPlaying, onAdjust, onSetBpm }: Props) {
+  const [keypadOpen, setKeypadOpen] = useState(false);
+  const minusRepeat = usePressRepeat({
+    onStep: () => onAdjust(-1),
+  });
+  const plusRepeat = usePressRepeat({
+    onStep: () => onAdjust(1),
+  });
+
+  useEffect(() => {
+    if (!isPlaying) return;
+    setKeypadOpen(false);
+    minusRepeat.onPressOut();
+    plusRepeat.onPressOut();
+  }, [isPlaying, minusRepeat.onPressOut, plusRepeat.onPressOut]);
+
   return (
     <View style={styles.outer}>
       <LinearGradient
@@ -21,8 +42,54 @@ export function CenterBpmDisplay({ bpm }: Props) {
             style={styles.face}
           >
             <View style={styles.topBevel} />
-            <Text style={styles.digits}>{bpm}</Text>
-            <Text style={styles.unitLabel}>BPM</Text>
+            <View style={styles.row}>
+              {isPlaying ? null : (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Decrease BPM"
+                  onPressIn={minusRepeat.onPressIn}
+                  onPressOut={minusRepeat.onPressOut}
+                  style={({ pressed }) => [
+                    styles.stepBtn,
+                    pressed && styles.stepBtnPressed,
+                  ]}
+                >
+                  <Text style={styles.stepLabel}>−</Text>
+                </Pressable>
+              )}
+
+              {isPlaying ? (
+                <View style={styles.readout}>
+                  <Text style={styles.digits}>{bpm}</Text>
+                  <Text style={styles.unitLabel}>BPM</Text>
+                </View>
+              ) : (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Enter BPM"
+                  onPress={() => setKeypadOpen(true)}
+                  style={styles.readout}
+                >
+                  <Text style={styles.digits}>{bpm}</Text>
+                  <Text style={styles.unitLabel}>BPM</Text>
+                </Pressable>
+              )}
+
+              {isPlaying ? null : (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Increase BPM"
+                  onPressIn={plusRepeat.onPressIn}
+                  onPressOut={plusRepeat.onPressOut}
+                  style={({ pressed }) => [
+                    styles.stepBtn,
+                    pressed && styles.stepBtnPressed,
+                  ]}
+                >
+                  <Text style={styles.stepLabel}>+</Text>
+                </Pressable>
+              )}
+            </View>
             <View style={styles.gemSlot}>
               <LinearGradient
                 colors={['#9ADFFF', colors.accent, colors.accentDim]}
@@ -32,6 +99,16 @@ export function CenterBpmDisplay({ bpm }: Props) {
           </LinearGradient>
         </View>
       </LinearGradient>
+      {keypadOpen ? (
+        <BpmKeypad
+          bpm={bpm}
+          onClose={() => setKeypadOpen(false)}
+          onSubmit={(next) => {
+            onSetBpm(next);
+            setKeypadOpen(false);
+          }}
+        />
+      ) : null}
     </View>
   );
 }
@@ -44,6 +121,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 24,
     elevation: 12,
+    maxWidth: 420,
+    width: '100%',
+    alignSelf: 'center',
   },
   frameGradient: {
     borderRadius: 6,
@@ -71,6 +151,35 @@ const styles = StyleSheet.create({
     right: 12,
     height: 1,
     backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  row: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  readout: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  stepBtn: {
+    width: 44,
+    height: 48,
+    borderRadius: 6,
+    backgroundColor: colors.metalDark,
+    borderWidth: 1,
+    borderColor: colors.metalMid,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepBtnPressed: {
+    backgroundColor: '#141C26',
+  },
+  stepLabel: {
+    ...typography.panelValue,
+    color: colors.textPrimary,
+    fontSize: 26,
+    lineHeight: 28,
   },
   digits: {
     ...typography.timer,

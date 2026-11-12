@@ -1,7 +1,8 @@
 import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getBeatFileUri } from '../audio/beatCache';
-import { clampBpm, DEFAULT_BPM } from '../metronome/bpm';
+import { useBeatPulse } from './useBeatPulse';
+import { beatDurationSeconds, clampBpm, DEFAULT_BPM } from '../metronome/bpm';
 import { loadBpm, saveBpm } from '../storage/preferences';
 
 /** Mix with Spotify/podcasts; do not grab exclusive audio focus (lock screen needs doNotMix). */
@@ -59,6 +60,7 @@ export function useMetronome() {
   const setBpm = useCallback(
     async (next: number) => {
       const clamped = clampBpm(next);
+      bpmRef.current = clamped;
       setBpmState(clamped);
       await saveBpm(clamped);
       if (playerRef.current) {
@@ -94,10 +96,13 @@ export function useMetronome() {
     setIsPlaying(false);
   }, []);
 
+  const beatPulse = useBeatPulse(isPlaying, beatDurationSeconds(bpm));
+
   return {
     ready,
     bpm,
     isPlaying,
+    beatPulse,
     start,
     stop,
     adjustBpm,
