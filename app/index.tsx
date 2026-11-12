@@ -8,7 +8,7 @@ import { StatusOrbRow } from '../src/ui/StatusOrbRow';
 import { StoneBackground } from '../src/ui/StoneBackground';
 
 export default function HomeScreen() {
-  const { ready, bpm, isPlaying, start, stop, adjustBpm, setBpm } = useMetronome();
+  const { ready, bpm, isPlaying, beatPulse, start, stop, adjustBpm, setBpm } = useMetronome();
 
   if (!ready) {
     return <View style={styles.loading} />;
@@ -18,7 +18,7 @@ export default function HomeScreen() {
     <View style={styles.root}>
       <StoneBackground />
       <SafeAreaView style={styles.safe}>
-        <StatusOrbRow isPlaying={isPlaying} />
+        <StatusOrbRow isPlaying={isPlaying} pulse={beatPulse} />
 
         <CenterBpmDisplay
           bpm={bpm}
