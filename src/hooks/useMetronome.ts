@@ -59,6 +59,7 @@ export function useMetronome() {
   const setBpm = useCallback(
     async (next: number) => {
       const clamped = clampBpm(next);
+      bpmRef.current = clamped;
       setBpmState(clamped);
       await saveBpm(clamped);
       if (playerRef.current) {

@@ -2,7 +2,6 @@ import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMetronome } from '../src/hooks/useMetronome';
 import { spacing } from '../src/theme';
-import { BpmPanel } from '../src/ui/BpmPanel';
 import { CenterBpmDisplay } from '../src/ui/CenterBpmDisplay';
 import { GemButton } from '../src/ui/GemButton';
 import { StatusOrbRow } from '../src/ui/StatusOrbRow';
@@ -21,9 +20,7 @@ export default function HomeScreen() {
       <SafeAreaView style={styles.safe}>
         <StatusOrbRow isPlaying={isPlaying} />
 
-        <CenterBpmDisplay bpm={bpm} />
-
-        <BpmPanel bpm={bpm} onAdjust={adjustBpm} />
+        <CenterBpmDisplay bpm={bpm} isPlaying={isPlaying} onAdjust={adjustBpm} />
 
         <View style={styles.actionsRow}>
           <GemButton variant="start" disabled={isPlaying} onPress={() => void start()} />
