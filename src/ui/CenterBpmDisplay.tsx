@@ -1,16 +1,19 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { usePressRepeat } from '../hooks/usePressRepeat';
 import { colors, typography } from '../theme';
+import { BpmKeypad } from './BpmKeypad';
 
 type Props = {
   bpm: number;
   isPlaying: boolean;
   onAdjust: (delta: number) => void;
+  onSetBpm: (bpm: number) => void;
 };
 
-export function CenterBpmDisplay({ bpm, isPlaying, onAdjust }: Props) {
+export function CenterBpmDisplay({ bpm, isPlaying, onAdjust, onSetBpm }: Props) {
+  const [keypadOpen, setKeypadOpen] = useState(false);
   const minusRepeat = usePressRepeat({
     onStep: () => onAdjust(-1),
   });
@@ -20,6 +23,7 @@ export function CenterBpmDisplay({ bpm, isPlaying, onAdjust }: Props) {
 
   useEffect(() => {
     if (!isPlaying) return;
+    setKeypadOpen(false);
     minusRepeat.onPressOut();
     plusRepeat.onPressOut();
   }, [isPlaying, minusRepeat.onPressOut, plusRepeat.onPressOut]);
@@ -54,10 +58,22 @@ export function CenterBpmDisplay({ bpm, isPlaying, onAdjust }: Props) {
                 </Pressable>
               )}
 
-              <View style={styles.readout}>
-                <Text style={styles.digits}>{bpm}</Text>
-                <Text style={styles.unitLabel}>BPM</Text>
-              </View>
+              {isPlaying ? (
+                <View style={styles.readout}>
+                  <Text style={styles.digits}>{bpm}</Text>
+                  <Text style={styles.unitLabel}>BPM</Text>
+                </View>
+              ) : (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Enter BPM"
+                  onPress={() => setKeypadOpen(true)}
+                  style={styles.readout}
+                >
+                  <Text style={styles.digits}>{bpm}</Text>
+                  <Text style={styles.unitLabel}>BPM</Text>
+                </Pressable>
+              )}
 
               {isPlaying ? null : (
                 <Pressable
@@ -83,6 +99,16 @@ export function CenterBpmDisplay({ bpm, isPlaying, onAdjust }: Props) {
           </LinearGradient>
         </View>
       </LinearGradient>
+      {keypadOpen ? (
+        <BpmKeypad
+          bpm={bpm}
+          onClose={() => setKeypadOpen(false)}
+          onSubmit={(next) => {
+            onSetBpm(next);
+            setKeypadOpen(false);
+          }}
+        />
+      ) : null}
     </View>
   );
 }

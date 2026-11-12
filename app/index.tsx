@@ -8,7 +8,7 @@ import { StatusOrbRow } from '../src/ui/StatusOrbRow';
 import { StoneBackground } from '../src/ui/StoneBackground';
 
 export default function HomeScreen() {
-  const { ready, bpm, isPlaying, start, stop, adjustBpm } = useMetronome();
+  const { ready, bpm, isPlaying, start, stop, adjustBpm, setBpm } = useMetronome();
 
   if (!ready) {
     return <View style={styles.loading} />;
@@ -20,7 +20,14 @@ export default function HomeScreen() {
       <SafeAreaView style={styles.safe}>
         <StatusOrbRow isPlaying={isPlaying} />
 
-        <CenterBpmDisplay bpm={bpm} isPlaying={isPlaying} onAdjust={adjustBpm} />
+        <CenterBpmDisplay
+          bpm={bpm}
+          isPlaying={isPlaying}
+          onAdjust={adjustBpm}
+          onSetBpm={(next) => {
+            void setBpm(next);
+          }}
+        />
 
         <View style={styles.actionsRow}>
           <GemButton variant="start" disabled={isPlaying} onPress={() => void start()} />
