@@ -1,6 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 import { usePressRepeat } from '../hooks/usePressRepeat';
 import { colors, typography } from '../theme';
 import { BpmKeypad } from './BpmKeypad';
@@ -8,11 +9,28 @@ import { BpmKeypad } from './BpmKeypad';
 type Props = {
   bpm: number;
   isPlaying: boolean;
+  pulse: SharedValue<number>;
   onAdjust: (delta: number) => void;
   onSetBpm: (bpm: number) => void;
 };
 
-export function CenterBpmDisplay({ bpm, isPlaying, onAdjust, onSetBpm }: Props) {
+function BeatLight({ pulse, active }: { pulse: SharedValue<number>; active: boolean }) {
+  const glow = useAnimatedStyle(() => {
+    const beat = active ? pulse.value : 1;
+    return {
+      opacity: active ? 0.35 + beat * 0.65 : 1,
+      transform: [{ scale: active ? 0.92 + beat * 0.12 : 1 }],
+    };
+  }, [active]);
+
+  return (
+    <Animated.View style={[styles.beatLight, glow]}>
+      <View style={styles.beatCore} />
+    </Animated.View>
+  );
+}
+
+export function CenterBpmDisplay({ bpm, isPlaying, pulse, onAdjust, onSetBpm }: Props) {
   const [keypadOpen, setKeypadOpen] = useState(false);
   const minusRepeat = usePressRepeat({
     onStep: () => onAdjust(-1),
@@ -28,77 +46,62 @@ export function CenterBpmDisplay({ bpm, isPlaying, onAdjust, onSetBpm }: Props) 
     plusRepeat.onPressOut();
   }, [isPlaying, minusRepeat.onPressOut, plusRepeat.onPressOut]);
 
+  const digits = isPlaying ? (
+    <View style={styles.readout}>
+      <Text style={styles.digits}>{bpm}</Text>
+    </View>
+  ) : (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Enter BPM"
+      onPress={() => setKeypadOpen(true)}
+      style={styles.readout}
+    >
+      <Text style={styles.digits}>{bpm}</Text>
+    </Pressable>
+  );
+
   return (
     <View style={styles.outer}>
       <LinearGradient
-        colors={[colors.metalLight, colors.metalDark, '#2A3544']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.frameGradient}
+        colors={[colors.metalLight, colors.metalDark, colors.metalMid]}
+        style={styles.frame}
       >
-        <View style={styles.octagonWrap}>
-          <LinearGradient
-            colors={[colors.panelTop, colors.panelInner, '#060A10']}
-            style={styles.face}
-          >
-            <View style={styles.topBevel} />
-            <View style={styles.row}>
-              {isPlaying ? null : (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Decrease BPM"
-                  onPressIn={minusRepeat.onPressIn}
-                  onPressOut={minusRepeat.onPressOut}
-                  style={({ pressed }) => [
-                    styles.stepBtn,
-                    pressed && styles.stepBtnPressed,
-                  ]}
-                >
-                  <Text style={styles.stepLabel}>−</Text>
-                </Pressable>
-              )}
-
-              {isPlaying ? (
-                <View style={styles.readout}>
-                  <Text style={styles.digits}>{bpm}</Text>
-                  <Text style={styles.unitLabel}>BPM</Text>
-                </View>
-              ) : (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Enter BPM"
-                  onPress={() => setKeypadOpen(true)}
-                  style={styles.readout}
-                >
-                  <Text style={styles.digits}>{bpm}</Text>
-                  <Text style={styles.unitLabel}>BPM</Text>
-                </Pressable>
-              )}
-
-              {isPlaying ? null : (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Increase BPM"
-                  onPressIn={plusRepeat.onPressIn}
-                  onPressOut={plusRepeat.onPressOut}
-                  style={({ pressed }) => [
-                    styles.stepBtn,
-                    pressed && styles.stepBtnPressed,
-                  ]}
-                >
-                  <Text style={styles.stepLabel}>+</Text>
-                </Pressable>
-              )}
-            </View>
-            <View style={styles.gemSlot}>
-              <LinearGradient
-                colors={['#9ADFFF', colors.accent, colors.accentDim]}
-                style={styles.gem}
-              />
-            </View>
-          </LinearGradient>
+        <View style={styles.face}>
+          <Text style={styles.bpmLabel}>BPM</Text>
+          <View style={styles.heroRow}>
+            {digits}
+            <BeatLight pulse={pulse} active={isPlaying} />
+          </View>
         </View>
       </LinearGradient>
+
+      {isPlaying ? null : (
+        <View style={styles.stepper}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Decrease BPM"
+            onPressIn={minusRepeat.onPressIn}
+            onPressOut={minusRepeat.onPressOut}
+            style={({ pressed }) => [styles.stepBtn, pressed && styles.stepBtnPressed]}
+          >
+            <Text style={styles.stepLabel}>−</Text>
+          </Pressable>
+          <View style={styles.stepValue}>
+            <Text style={styles.stepDigits}>{bpm}</Text>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Increase BPM"
+            onPressIn={plusRepeat.onPressIn}
+            onPressOut={plusRepeat.onPressOut}
+            style={({ pressed }) => [styles.stepBtn, pressed && styles.stepBtnPressed]}
+          >
+            <Text style={styles.stepLabel}>+</Text>
+          </Pressable>
+        </View>
+      )}
+
       {keypadOpen ? (
         <BpmKeypad
           bpm={bpm}
@@ -115,97 +118,103 @@ export function CenterBpmDisplay({ bpm, isPlaying, onAdjust, onSetBpm }: Props) 
 
 const styles = StyleSheet.create({
   outer: {
-    marginVertical: 8,
-    shadowColor: colors.accent,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.25,
-    shadowRadius: 24,
-    elevation: 12,
-    maxWidth: 420,
     width: '100%',
+    maxWidth: 420,
     alignSelf: 'center',
+    gap: 16,
   },
-  frameGradient: {
-    borderRadius: 6,
-    padding: 4,
-  },
-  octagonWrap: {
-    borderRadius: 4,
-    overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: '#1A2430',
+  frame: {
+    borderRadius: 16,
+    padding: 3,
   },
   face: {
-    minHeight: 140,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 20,
-    paddingHorizontal: 16,
+    borderRadius: 13,
+    backgroundColor: colors.panelInner,
     borderWidth: 1,
     borderColor: colors.panelBorder,
+    paddingVertical: 18,
+    paddingHorizontal: 18,
+    gap: 4,
   },
-  topBevel: {
-    position: 'absolute',
-    top: 0,
-    left: 12,
-    right: 12,
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+  bpmLabel: {
+    ...typography.serifLabel,
+    color: colors.textSecondary,
+    letterSpacing: 2,
   },
-  row: {
-    width: '100%',
+  heroRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
   },
   readout: {
     flex: 1,
-    alignItems: 'center',
-  },
-  stepBtn: {
-    width: 44,
-    height: 48,
-    borderRadius: 6,
-    backgroundColor: colors.metalDark,
-    borderWidth: 1,
-    borderColor: colors.metalMid,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stepBtnPressed: {
-    backgroundColor: '#141C26',
-  },
-  stepLabel: {
-    ...typography.panelValue,
-    color: colors.textPrimary,
-    fontSize: 26,
-    lineHeight: 28,
   },
   digits: {
     ...typography.timer,
-    color: colors.accent,
+    color: '#F4FBFF',
+    fontSize: 84,
+    letterSpacing: 1,
     textShadowColor: colors.accentGlow,
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 16,
     includeFontPadding: false,
   },
-  unitLabel: {
-    ...typography.serifLabel,
-    color: colors.textMuted,
-    marginTop: 4,
-    letterSpacing: 4,
+  beatLight: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colors.accent,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 12,
+    elevation: 8,
   },
-  gemSlot: {
-    position: 'absolute',
-    bottom: -2,
-    padding: 3,
-    backgroundColor: colors.metalDark,
+  beatCore: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#F4FBFF',
+  },
+  stepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+  },
+  stepBtn: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.panelInner,
     borderWidth: 1,
-    borderColor: colors.metalEdge,
-    transform: [{ rotate: '45deg' }],
+    borderColor: colors.panelBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  gem: {
-    width: 12,
-    height: 12,
+  stepBtnPressed: {
+    backgroundColor: '#102033',
+  },
+  stepLabel: {
+    ...typography.panelValue,
+    color: colors.textPrimary,
+    fontSize: 28,
+    lineHeight: 32,
+  },
+  stepValue: {
+    minWidth: 92,
+    height: 52,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.panelBorder,
+    backgroundColor: '#071018',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepDigits: {
+    ...typography.panelValue,
+    color: colors.textPrimary,
+    fontSize: 22,
   },
 });

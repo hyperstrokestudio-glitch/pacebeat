@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { getBeatFileUri } from '../audio/beatCache';
 import { useBeatPulse } from './useBeatPulse';
 import { beatDurationSeconds, clampBpm, DEFAULT_BPM } from '../metronome/bpm';
-import { loadBpm, saveBpm } from '../storage/preferences';
+import { loadBpm, loadVolume, saveBpm, saveVolume, DEFAULT_VOLUME } from '../storage/preferences';
 
 /** Mix with Spotify/podcasts; do not grab exclusive audio focus (lock screen needs doNotMix). */
 const METRONOME_AUDIO_MODE = {
@@ -16,17 +16,22 @@ export function useMetronome() {
   const [ready, setReady] = useState(false);
   const [bpm, setBpmState] = useState(DEFAULT_BPM);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [volume, setVolumeState] = useState(DEFAULT_VOLUME);
   const playerRef = useRef<ReturnType<typeof createAudioPlayer> | null>(null);
   const bpmRef = useRef(bpm);
+  const volumeRef = useRef(volume);
   bpmRef.current = bpm;
+  volumeRef.current = volume;
 
   useEffect(() => {
     let mounted = true;
     void (async () => {
       await setAudioModeAsync(METRONOME_AUDIO_MODE);
-      const stored = await loadBpm();
+      const [storedBpm, storedVolume] = await Promise.all([loadBpm(), loadVolume()]);
       if (mounted) {
-        setBpmState(stored);
+        setBpmState(storedBpm);
+        setVolumeState(storedVolume);
+        volumeRef.current = storedVolume;
         setReady(true);
       }
     })();
@@ -44,7 +49,7 @@ export function useMetronome() {
       const uri = await getBeatFileUri(tempo);
       player.replace({ uri });
       player.loop = true;
-      player.volume = 1;
+      player.volume = volumeRef.current / 100;
     },
     [],
   );
@@ -72,6 +77,16 @@ export function useMetronome() {
     },
     [loadBeatIntoPlayer],
   );
+
+  const setVolume = useCallback(async (next: number) => {
+    const clamped = Math.min(100, Math.max(0, Math.round(next)));
+    volumeRef.current = clamped;
+    setVolumeState(clamped);
+    await saveVolume(clamped);
+    if (playerRef.current) {
+      playerRef.current.volume = clamped / 100;
+    }
+  }, []);
 
   const adjustBpm = useCallback(
     (delta: number) => {
@@ -101,11 +116,13 @@ export function useMetronome() {
   return {
     ready,
     bpm,
+    volume,
     isPlaying,
     beatPulse,
     start,
     stop,
     adjustBpm,
     setBpm,
+    setVolume,
   };
 }
