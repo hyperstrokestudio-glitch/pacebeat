@@ -1,51 +1,40 @@
-import type { AudioPlayer } from 'expo-audio';
-import { useEffect, type RefObject } from 'react';
+import { useEffect } from 'react';
 import { useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
+import { beatFlashReleaseMs, beatIndex } from './beatEdge';
 
-export function useBeatPulse(
-  isRunning: boolean,
-  playerRef: RefObject<AudioPlayer | null>,
-  beatDuration: number,
-) {
+export function useBeatPulse(isRunning: boolean, beatDuration: number) {
   const pulse = useSharedValue(0);
 
   useEffect(() => {
-    if (!isRunning) {
-      pulse.value = withTiming(0, { duration: 120 });
+    if (!isRunning || beatDuration <= 0) {
+      pulse.value = withTiming(0, { duration: 80 });
       return;
     }
 
+    const beatMs = beatDuration * 1000;
+    const origin = Date.now();
+    let lastIndex = -1;
     let frame = 0;
-    let lastTime = 0;
-    let armed = true;
+
+    const flash = () => {
+      pulse.value = withSequence(
+        withTiming(1, { duration: 40 }),
+        withTiming(0, { duration: beatFlashReleaseMs(beatMs) }),
+      );
+    };
 
     const tick = () => {
-      const player = playerRef.current;
-      if (!player) {
-        frame = requestAnimationFrame(tick);
-        return;
+      const index = beatIndex(Date.now() - origin, beatMs);
+      if (index !== lastIndex) {
+        lastIndex = index;
+        flash();
       }
-      const t = player.currentTime;
-      const wrapped =
-        lastTime > 0.02 && t < lastTime - beatDuration * 0.25;
-      const nearStart = t < 0.015;
-      if (armed && (wrapped || (lastTime === 0 && nearStart))) {
-        armed = false;
-        pulse.value = withSequence(
-          withTiming(1, { duration: 45 }),
-          withTiming(0, { duration: 140 }),
-        );
-      }
-      if (t > beatDuration * 0.08) {
-        armed = true;
-      }
-      lastTime = t;
       frame = requestAnimationFrame(tick);
     };
 
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [beatDuration, isRunning, playerRef, pulse]);
+  }, [beatDuration, isRunning, pulse]);
 
   return pulse;
 }

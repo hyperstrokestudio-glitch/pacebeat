@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS, useSharedValue } from 'react-native-reanimated';
@@ -10,7 +11,6 @@ type Props = {
 
 export function VolumeSlider({ value, onChange }: Props) {
   const trackWidth = useSharedValue(1);
-  const dragStart = useSharedValue(value);
 
   const setValueFromX = (x: number) => {
     'worklet';
@@ -20,81 +20,85 @@ export function VolumeSlider({ value, onChange }: Props) {
     runOnJS(onChange)(Math.round(ratio * 100));
   };
 
-  const pan = Gesture.Pan()
-    .onBegin(() => {
-      dragStart.value = value;
-    })
-    .onUpdate((event) => {
-      setValueFromX(event.x);
-    });
-
+  const pan = Gesture.Pan().onUpdate((event) => {
+    setValueFromX(event.x);
+  });
   const tap = Gesture.Tap().onEnd((event) => {
     setValueFromX(event.x);
   });
-
   const gesture = Gesture.Race(pan, tap);
+  const clamped = Math.min(100, Math.max(0, value));
 
   return (
-    <View style={styles.wrap}>
-      <Text style={styles.label}>VOLUME</Text>
-      <View style={styles.row}>
-        <GestureDetector gesture={gesture}>
-          <View
-            style={styles.trackShell}
-            onLayout={(event) => {
-              trackWidth.value = event.nativeEvent.layout.width;
-            }}
-          >
-            <View style={styles.track}>
-              <View style={[styles.fill, { width: `${value}%` }]} />
-            </View>
-            <View
-              style={[
-                styles.thumb,
-                { left: `${Math.min(100, Math.max(0, value))}%` },
-              ]}
-            />
-          </View>
-        </GestureDetector>
-        <Text style={styles.percent}>{value}%</Text>
+    <View style={styles.frame}>
+      <View style={styles.header}>
+        <Ionicons name="volume-medium" size={16} color={colors.textSecondary} />
+        <Text style={styles.label}>BEAT VOLUME</Text>
+        <Text style={styles.percent}>{clamped}%</Text>
       </View>
+      <GestureDetector gesture={gesture}>
+        <View
+          accessibilityRole="adjustable"
+          accessibilityLabel="Beat volume"
+          accessibilityValue={{ min: 0, max: 100, now: clamped }}
+          style={styles.trackShell}
+          onLayout={(event) => {
+            trackWidth.value = event.nativeEvent.layout.width;
+          }}
+        >
+          <View style={styles.track}>
+            <View style={[styles.fill, { width: `${clamped}%` }]} />
+          </View>
+          <View style={[styles.thumb, { left: `${clamped}%` }]} />
+        </View>
+      </GestureDetector>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: {
+  frame: {
     width: '100%',
-    gap: 10,
+    maxWidth: 420,
+    alignSelf: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.panelBorder,
+    backgroundColor: colors.panelInner,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 12,
   },
-  label: {
-    ...typography.label,
-    color: colors.textSecondary,
-    textTransform: 'uppercase',
-  },
-  row: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
+    gap: 8,
+  },
+  label: {
+    ...typography.serifLabel,
+    flex: 1,
+    color: colors.textSecondary,
+    letterSpacing: 1.6,
+  },
+  percent: {
+    ...typography.serifLabel,
+    color: colors.textPrimary,
   },
   trackShell: {
-    flex: 1,
-    height: 36,
+    height: 28,
     justifyContent: 'center',
   },
   track: {
-    height: 10,
+    height: 8,
     borderRadius: radius.pill,
-    backgroundColor: '#0A1018',
+    backgroundColor: '#071018',
     borderWidth: 1,
-    borderColor: colors.panelBorder,
+    borderColor: colors.metalDark,
     overflow: 'hidden',
   },
   fill: {
     height: '100%',
     backgroundColor: colors.accent,
-    borderTopRightRadius: radius.pill,
-    borderBottomRightRadius: radius.pill,
   },
   thumb: {
     position: 'absolute',
@@ -102,19 +106,8 @@ const styles = StyleSheet.create({
     height: 22,
     marginLeft: -11,
     borderRadius: 11,
-    backgroundColor: colors.panelTop,
-    borderWidth: 1,
-    borderColor: colors.panelHighlight,
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.35,
-    shadowRadius: 4,
-    elevation: 6,
-  },
-  percent: {
-    ...typography.value,
-    color: colors.textPrimary,
-    minWidth: 44,
-    textAlign: 'right',
+    backgroundColor: '#D7E7F5',
+    borderWidth: 2,
+    borderColor: colors.accent,
   },
 });

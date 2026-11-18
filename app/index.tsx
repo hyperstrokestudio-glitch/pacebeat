@@ -2,14 +2,25 @@ import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useMetronome } from '../src/hooks/useMetronome';
 import { spacing } from '../src/theme';
-import { BpmPanel } from '../src/ui/BpmPanel';
+import { AppHeader } from '../src/ui/AppHeader';
 import { CenterBpmDisplay } from '../src/ui/CenterBpmDisplay';
 import { GemButton } from '../src/ui/GemButton';
-import { StatusOrbRow } from '../src/ui/StatusOrbRow';
 import { StoneBackground } from '../src/ui/StoneBackground';
+import { VolumeSlider } from '../src/ui/VolumeSlider';
 
 export default function HomeScreen() {
-  const { ready, bpm, isPlaying, start, stop, adjustBpm } = useMetronome();
+  const {
+    ready,
+    bpm,
+    volume,
+    isPlaying,
+    beatPulse,
+    start,
+    stop,
+    adjustBpm,
+    setBpm,
+    setVolume,
+  } = useMetronome();
 
   if (!ready) {
     return <View style={styles.loading} />;
@@ -19,16 +30,35 @@ export default function HomeScreen() {
     <View style={styles.root}>
       <StoneBackground />
       <SafeAreaView style={styles.safe}>
-        <StatusOrbRow isPlaying={isPlaying} />
+        <AppHeader />
 
-        <CenterBpmDisplay bpm={bpm} />
+        <CenterBpmDisplay
+          bpm={bpm}
+          isPlaying={isPlaying}
+          pulse={beatPulse}
+          onAdjust={adjustBpm}
+          onSetBpm={(next) => {
+            void setBpm(next);
+          }}
+        />
 
-        <BpmPanel bpm={bpm} onAdjust={adjustBpm} />
+        <GemButton
+          running={isPlaying}
+          onPress={() => {
+            if (isPlaying) {
+              stop();
+              return;
+            }
+            void start();
+          }}
+        />
 
-        <View style={styles.actionsRow}>
-          <GemButton variant="start" disabled={isPlaying} onPress={() => void start()} />
-          <GemButton variant="stop" disabled={!isPlaying} onPress={stop} />
-        </View>
+        <VolumeSlider
+          value={volume}
+          onChange={(next) => {
+            void setVolume(next);
+          }}
+        />
       </SafeAreaView>
     </View>
   );
@@ -37,22 +67,17 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#05080E',
+    backgroundColor: '#050910',
   },
   loading: {
     flex: 1,
-    backgroundColor: '#05080E',
+    backgroundColor: '#050910',
   },
   safe: {
     flex: 1,
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.lg,
     justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
-  actionsRow: {
-    flexDirection: 'row',
     gap: spacing.md,
-    marginTop: spacing.xs,
   },
 });

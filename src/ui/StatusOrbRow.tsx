@@ -1,13 +1,15 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, View } from 'react-native';
+import type { SharedValue } from 'react-native-reanimated';
 import { colors } from '../theme';
 import { StatusOrb } from './StatusOrb';
 
 type Props = {
   isPlaying: boolean;
+  pulse: SharedValue<number>;
 };
 
-export function StatusOrbRow({ isPlaying }: Props) {
+export function StatusOrbRow({ isPlaying, pulse }: Props) {
   return (
     <View style={styles.outer}>
       <LinearGradient
@@ -19,7 +21,7 @@ export function StatusOrbRow({ isPlaying }: Props) {
         <View style={styles.inner}>
           <View style={styles.spikeLeft} />
           <View style={styles.spikeRight} />
-          <StatusOrb variant="run" active={isPlaying} label="Run" />
+          <StatusOrb variant="run" active={isPlaying} label="Run" pulse={pulse} />
         </View>
       </LinearGradient>
     </View>
